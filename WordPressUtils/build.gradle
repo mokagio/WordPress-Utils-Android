@@ -11,10 +11,6 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-repositories {
-    jcenter()
-}
-
 dependencies {
     compile('commons-lang:commons-lang:2.6') {
         exclude group: 'commons-logging'
