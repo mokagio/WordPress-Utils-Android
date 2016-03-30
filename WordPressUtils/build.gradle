@@ -3,13 +3,13 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.novoda:bintray-release:0.3.4'
     }
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'maven'
-apply plugin: 'signing'
+apply plugin: 'com.novoda.bintray-release' // must be applied after your artifact generating plugin (eg. java / com.android.library)
 
 dependencies {
     compile('commons-lang:commons-lang:2.6') {
@@ -22,8 +22,6 @@ dependencies {
 android {
     useLibrary 'org.apache.http.legacy'
 
-    publishNonDefault true
-
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
 
@@ -34,58 +32,17 @@ android {
     }
 }
 
-version android.defaultConfig.versionName
-group = "org.wordpress"
-archivesBaseName = "utils"
-
-signing {
-    required {
-        has("release") && project.properties.containsKey("signing.keyId") && project.properties.containsKey("signing.secretKeyRingFile")
-    }
-    sign configurations.archives
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: project.properties.ossrhUsername, password: project.properties.ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: project.properties.ossrhUsername, password: project.properties.ossrhPassword)
-            }
-
-            pom.project {
-                name 'WordPress-Utils-Android'
-                packaging 'aar'
-                description 'Utils lib for WordPress-Android'
-                url 'https://github.com/wordpress-mobile/WordPress-Utils-Android'
-                scm {
-                    connection 'scm:git:https://github.com/wordpress-mobile/WordPress-Utils-Android.git'
-                    developerConnection 'scm:git:https://github.com/wordpress-mobile/WordPress-Utils-Android.git'
-                    url 'https://github.com/wordpress-mobile/WordPress-Utils-Android'
-                }
-
-                licenses {
-                    license {
-                        name 'The MIT License (MIT)'
-                        url 'http://opensource.org/licenses/MIT'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'maxme'
-                        name 'Maxime Biais'
-                        email 'maxime@automattic.com'
-                    }
-                }
-            }
-        }
-    }
+publish {
+    artifactId= 'utils'
+    userOrg = 'wordpress-mobile'
+    groupId = 'org.wordpress'
+    uploadName = 'utils'
+    description = 'Library for common utilities used by WordPress-Android'
+    publishVersion = '1.9.0'
+    licences = ['MIT', 'GPL']
+    website = 'https://github.com/wordpress-mobile/WordPress-Utils-Android'
+    dryRun = 'false'
+    autoPublish = 'true'
 }
 
 android.libraryVariants.all { variant ->
