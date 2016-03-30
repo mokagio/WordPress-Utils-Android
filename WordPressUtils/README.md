@@ -13,3 +13,7 @@ $ ./gradlew build
 ```
 $ ./gradlew build bintrayUpload -PbintrayUser=XXX -PbintrayKey=XXX -PdryRun=false
 ```
+
+## LICENSE
+
+This library is dual licensed unded MIT and GPL v2.
