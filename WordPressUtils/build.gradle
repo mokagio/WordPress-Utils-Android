@@ -26,7 +26,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        versionName "1.9.0"
+        versionName "1.9.1"
         minSdkVersion 14
         targetSdkVersion 23
     }
@@ -38,7 +38,7 @@ publish {
     groupId = 'org.wordpress'
     uploadName = 'utils'
     description = 'Library for common utilities used by WordPress-Android'
-    publishVersion = '1.9.0'
+    publishVersion = '1.9.1'
     licences = ['MIT', 'GPL']
     website = 'https://github.com/wordpress-mobile/WordPress-Utils-Android'
     dryRun = 'false'
