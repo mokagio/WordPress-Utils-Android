@@ -12,6 +12,7 @@ apply plugin: 'com.automattic.android.fetchstyle'
 
 allprojects {
     apply plugin: 'checkstyle'
+    group = 'org.wordpress.android'
 
     repositories {
         jcenter()
