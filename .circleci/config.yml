@@ -59,9 +59,9 @@ workflows:
       - Lint
       - Build
       - bintray-upload-from-branch:
-        requires:
-          - Build
-        filters:
-          # Don't run on tags
-          tags:
-            ignore: /.*/
+          requires:
+            - Build
+          filters:
+            # Don't run on tags
+            tags:
+              ignore: /.*/
