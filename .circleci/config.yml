@@ -74,4 +74,6 @@ workflows:
               ignore: /.*/
             tags:
               only: /^\d+(\.\d+)*$/
-      - Upload to Bintray
+      - Upload to Bintray:
+          requires:
+            - Build
