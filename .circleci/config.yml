@@ -1,0 +1,87 @@
+version: 2.1
+
+orbs:
+  android: wordpress-mobile/android@0.0.22
+
+commands:
+  copy-gradle-properties:
+    steps:
+      - run:
+          name: Setup gradle.properties
+          command: cp gradle.properties-example gradle.properties
+
+jobs:
+  Lint:
+    executor:
+      name: android/default
+      api-version: "27"
+    steps:
+      - checkout
+      - copy-gradle-properties
+      - android/restore-gradle-cache
+      - run:
+          name: Lint & Checkstyle
+          command: ./gradlew --stacktrace lint checkstyle
+      - android/save-gradle-cache
+      - android/save-lint-results
+  Test:
+    executor:
+      name: android/default
+      api-version: "27"
+    steps:
+      - checkout
+      - copy-gradle-properties
+      - android/restore-gradle-cache
+      - run:
+          name: Test
+          command: ./gradlew --stacktrace test
+      - android/save-gradle-cache
+  Build and upload to Bintray:
+    executor:
+      name: android/default
+      api-version: "27"
+    steps:
+      - run:
+          command: |
+            echo $CIRCLE_PULL_REQUEST
+            echo $CIRCLE_PULL_REQUESTS
+      - checkout
+      - copy-gradle-properties
+      - android/restore-gradle-cache
+      - run:
+          name: Experimental Bintray Upload
+          command: |
+            # Locally, calling `./gradlew bintrayUpload` is enough to generate
+            # all the required artifacts. On CI, unless run each task
+            # individually, the Bintray task will fail to find the .aar and
+            # pom.xml artifacts in the build/ folder.
+            ./gradlew --stacktrace assembleRelease
+            # On local, the POM is generated automatically as part of
+            # assembleRelease, but that doesn't seem to be the case on CI. Here
+            # we need to explicitly generated it, otherwise bintrayUpload won't
+            # find it and won't upload it.
+            #
+            # Worth noting that the Bintray plugin mentions the necessity for
+            # a workaround to generate the POM. See:
+            # https://github.com/bintray/gradle-bintray-plugin#maven-publications
+            #
+            # See also the description and comments in this PR:
+            # https://github.com/wordpress-mobile/WordPress-Utils-Android/pull/39
+            ./gradlew --stacktrace generatePomFileForUtilsPublicationPublication
+            ./gradlew --stacktrace bintrayUpload
+      - android/save-gradle-cache
+
+workflows:
+  # We don't want this to run on tags, but no filter statement is necessary
+  # because that's the default behavior
+  WordPress-Utils-Android:
+    jobs:
+      # - Lint
+      # - Test
+      # - Build:
+      #     requires:
+      #       - Test
+      # - Build and upload to Bintray:
+      #     requires:
+      #       - Build
+      - Build and upload to Bintray
