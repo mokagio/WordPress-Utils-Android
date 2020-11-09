@@ -53,7 +53,7 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        versionName "1.30"
+        versionName "1.30.1"
         minSdkVersion 18
         targetSdkVersion 26
 
@@ -87,6 +87,63 @@ android.libraryVariants.all { variant ->
     }
 }
 
+def getGitBranch() {
+  return 'git rev-parse --abbrev-ref HEAD'.execute().text.trim()
+}
+
+def getGitTag() {
+  def result = 'git describe --exact-match --tags HEAD'.execute().text.trim()
+
+  if (result.startsWith("fatal: no tag exactly matches")) {
+    return null
+  } else {
+    return result
+  }
+}
+
+def getCheckedOutGitCommitHash() {
+  return 'git rev-parse --verify --short HEAD'.execute().text.trim()
+}
+
+def getBintrayVersion() {
+  // One option could be to use "branch-sha" as the version
+  // return "${getGitBranch()}-${getCheckedOutGitCommitHash()}"
+
+  // A more CI friendly option might be to just use the sha
+  def tag = getGitTag()
+
+  // It's not ideal to access CI environment variables from here, since this
+  // code could be run locally as well. The reasons this is this way right now
+  // is because of the logic to extract the PR number.
+  //
+  // See https://circleci.com/docs/2.0/env-vars/
+  def prURL = System.getenv('CIRCLE_PULL_REQUEST')
+  if (prURL) {
+    def pr = prURL.split('/').last()
+
+    if (pr) {
+      return "${pr}-${getCheckedOutGitCommitHash()}"
+    }
+  }
+
+  // Not on a PR. Are we on master|trunk?
+  if (getGitBranch() == 'master') {
+    // On master|trunk use the library version; these are production releases
+    return android.defaultConfig.versionName
+  }
+
+  // Are we on develop?
+  if (getGitBranch() == 'develop') {
+    // TODO: only return version if it's a "-beta.n" one
+  }
+
+  if (tag) {
+    return tag
+  } else {
+    return getCheckedOutGitCommitHash()
+  }
+}
+
 bintray {
     user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
     key = project.hasProperty('bintrayKey') ? project.property('bintrayKey') : System.getenv('BINTRAY_KEY')
@@ -94,26 +151,30 @@ bintray {
     publish = true
     pkg {
         repo = 'maven'
-        name = 'utils'
-        userOrg = 'wordpress-mobile'
+        name = 'utils-experiment'
+        userOrg = 'mokagio'
         licenses = ['MIT', 'GPL']
         vcsUrl = 'https://github.com/wordpress-mobile/WordPress-Utils-Android.git'
         version {
-            name = android.defaultConfig.versionName
+            name = getBintrayVersion()
             desc = 'Utils library for Android'
             released  = new Date()
         }
     }
 }
 
+// Because the components are created only during the `afterEvaluate` phase, we
+// must configure our publications using the `afterEvaluate()` lifecycle method
 project.afterEvaluate {
     publishing {
         publications {
             UtilsPublication(MavenPublication) {
+                // Applies the component for the release build variant
                 from components.release
+
                 groupId 'org.wordpress'
                 artifactId 'utils'
-                version android.defaultConfig.versionName
+                version getBintrayVersion()
             }
         }
     }
